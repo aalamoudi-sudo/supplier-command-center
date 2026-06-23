@@ -1036,6 +1036,104 @@ VIEWS.comms=()=>scaffold('chat','مركز التواصل الموحّد','قنا
 VIEWS.portal=()=>scaffold('portal','بوابة الموردين','بوابة مخصصة تتيح للموردين عرض التصاريح وتجديدها، رفع المستندات، عرض التصعيدات وتقديم الردود، متابعة الأداء والجداول، واستقبال الإشعارات.',['عرض التصاريح','تجديد','رفع مستندات','متابعة الأداء']);
 VIEWS.analytics=()=>scaffold('gauge','مركز التحليلات والذكاء','لوحات تحليلية تنفيذية مع تصدير مباشر إلى PDF و PowerPoint — تقارير جاهزة للعرض دون ملفات Excel تشغيلية.',['تحليلات تنفيذية','تصدير PDF','تصدير PowerPoint']);
 
+
+
+/* ============================================================
+   OPERATIONS EXPANSION — real linked modules, no placeholders
+   ============================================================ */
+NAV.find(g=>g.grp==='التشغيل').items.splice(3,0,
+  {id:'forms',t:'النماذج والاعتمادات',s:'FORMS & APPROVALS',i:'doc'},
+  {id:'reports',t:'التقارير والتصدير',s:'REPORTS & EXPORTS',i:'download'}
+);
+NAV.find(g=>g.grp==='التشغيل').items.find(i=>i.id==='comms').t='مركز الإشعارات';
+NAV.find(g=>g.grp==='التشغيل').items.find(i=>i.id==='comms').s='NOTIFICATION CENTER';
+NAV.find(g=>g.grp==='الحوكمة').items.find(i=>i.id==='incidents').t='البلاغات والمخالفات';
+NAV.find(g=>g.grp==='الحوكمة').items.find(i=>i.id==='deductions').t='توصيات الخصم';
+
+const ZONES=['البوابة الشمالية','البوابة الجنوبية','منطقة المسرح','منطقة التحميل','منطقة VIP','المواقف','منطقة الخدمات','المستودع المؤقت'];
+const APPROVALS=['مسودة','قيد المراجعة','معتمد','مرفوض'];
+const PLATE=['ر س د 4821','أ ب ج 7712','ح ك م 2954','د ن و 6308','س ع ق 1186','م ي د 2030','ط ل ب 5061','ق ر ب 9044'];
+const VEHICLES=Array.from({length:16},(_,i)=>{const sup=SUPPLIERS[i%SUPPLIERS.length]; const inside=i%3!==0; const over=i%5===0; return {
+  id:'VH-'+String(700+i), plate:PLATE[i%PLATE.length], driver:['أحمد الحربي','محمد العتيبي','عبدالله المالكي','سلمان القحطاني','تركي السبيعي','خالد الزهراني'][i%6],
+  sup, kind:['شاحنة تحميل','فان خدمات','رافعة شوكية','سيارة مشرف','براد تموين','بيك أب'][i%6], purpose:['توريد معدات','نقل عمالة','تحميل مواد','دعم تشغيلي','تموين وضيافة'][i%5],
+  gate:ZONES[i%2], zone:ZONES[(i+2)%ZONES.length], in:'0'+(7+i%5)+':'+String(10+i*3).slice(-2), out:inside?'—':String(11+i%8)+':20', inside, stay:ri(1,9), over,
+  permit:PERMITS[i%PERMITS.length]
+}});
+const INCIDENTS=Array.from({length:14},(_,i)=>{const sup=SUPPLIERS[(i*2)%SUPPLIERS.length]; const pr=[{t:'حرج',c:'c-red'},{t:'عالٍ',c:'c-orange'},{t:'متوسط',c:'c-amber'},{t:'منخفض',c:'c-stone'}][i%4]; return {
+  id:'INC-26-'+String(800+i), sup, permit:PERMITS[i%PERMITS.length], vehicle:i%2?VEHICLES[i%VEHICLES.length]:null,
+  type:['مخالفة تصريح','تأخير تسليم','مخالفة سلامة','تجاوز مدة مركبة','نقص مستندات','بلاغ جودة'][i%6], pr,
+  zone:ZONES[(i+3)%ZONES.length], reporter:['مشرف البوابة','مدير الموقع','مسؤول السلامة','فريق التشغيل'][i%4],
+  status:['جديد','قيد المعالجة','بانتظار اعتماد المشتريات','مغلق'][i%4], deduction:i%3===0?ri(3,45)*1000:0,
+  sla: i%4===0?-2:ri(2,18), action:['فتح تحقيق','طلب إفادة المورد','توصية خصم','إغلاق بعد المعالجة'][i%4]
+}});
+const NOTIFS=Array.from({length:16},(_,i)=>{const p=[{t:'حرج',c:'c-red'},{t:'عالٍ',c:'c-orange'},{t:'متوسط',c:'c-amber'},{t:'عادي',c:'c-green'}][i%4]; return {
+  id:'NTF-'+String(900+i), title:['انتهاء تصريح قريب','تجاوز مركبة للمدة','مخالفة تحتاج اعتماد','تصعيد بانتظار قرار','مهمة متأخرة','مستند ناقص'][i%6],
+  target:i%2?SUPPLIERS[i%SUPPLIERS.length].name:'مجموعة الموردين الحرجة', channel:['داخل المنصة','بريد إلكتروني','واتساب مستقبلاً'][i%3], p,
+  due:'2026/06/'+String(24+i%6).padStart(2,'0'), read:i%3===0, ref:i%2?PERMITS[i%PERMITS.length].id:ESCS[i%ESCS.length].id
+}});
+const FORMS=[
+ ['نموذج تسجيل مورد','مورد جديد','قيد المراجعة','مدير الموردين'],['طلب تصريح فرد','تصريح أفراد','معتمد','الأمن'],['طلب تصريح مركبة','تصريح مركبات','قيد المراجعة','اللوجستيات'],['إلغاء تصريح','تصاريح','مسودة','الأمن'],['بلاغ مخالفة','بلاغات','معتمد','مدير الموقع'],['اعتماد مخالفة','مشتريات','قيد المراجعة','مدير المشتريات'],['توصية خصم','خصومات','مسودة','المشتريات'],['تصعيد','تصعيدات','معتمد','العمليات'],['تقييم مورد','أداء','قيد المراجعة','الجودة'],['إغلاق مخالفة','بلاغات','مرفوض','السلامة']
+].map((f,i)=>({id:'FRM-'+String(300+i), name:f[0], cat:f[1], status:f[2], approver:f[3], updated:'2026/06/'+String(20+i%7).padStart(2,'0'), supplier:SUPPLIERS[i%SUPPLIERS.length].name}));
+const REPORTS=[
+ ['تقرير الموردين','PDF / PowerPoint','يشمل حالة الاعتماد، الخطورة، الأداء، المخالفات والتصعيدات'],['التصاريح النشطة','PDF','تصاريح الأفراد والمركبات مع البوابات والمناطق'],['التصاريح المنتهية والملغاة','PDF','سبب الإلغاء، جهة الإصدار، سجل الدخول والخروج'],['تصاريح المركبات','PDF','المركبات داخل/خارج الموقع وتجاوز مدة البقاء'],['المخالفات والخصومات','PDF','اعتماد المخالفات وتوصيات الخصم'],['التصعيدات','PDF / PowerPoint','المسار، SLA، القرار المطلوب، آخر تحديث'],['أداء الموردين','PDF','المخطط مقابل الفعلي ومؤشر الالتزام'],['المخطط مقابل الفعلي','PowerPoint','مناسب للعرض التنفيذي']
+].map((r,i)=>({id:'RPT-'+String(100+i), name:r[0], out:r[1], desc:r[2]}));
+const SCH=SUPPLIERS.slice(0,10).map((s,i)=>({sup:s, task:['توريد المسرح','اعتماد مخطط السلامة','تجهيز البوابات','توريد الإضاءة','نقل المعدات','تركيب الديكور','خدمات النظافة','التموين'][i%8], planned:ri(45,95), actual:ri(35,98), start:4+i*6, width:18+ri(5,22), dep:i?SUPPLIERS[(i-1)%SUPPLIERS.length].name:'—', critical:i%4===0, conflict:i%5===0}));
+
+function statusChip(t){const c=t==='معتمد'||t==='مغلق'?'c-green':t==='قيد المراجعة'||t==='قيد المعالجة'||t==='بانتظار اعتماد المشتريات'?'c-amber':t==='مرفوض'?'c-red':'c-stone';return `<span class="chip ${c}"><i></i>${t}</span>`}
+function pageTools(primary){return `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px"><button class="btn btn-p btn-sm">${ic('plus',15)} ${primary}</button><button class="btn btn-o btn-sm">${ic('download',15)} تصدير PDF</button><button class="btn btn-o btn-sm">${ic('gauge',15)} فلاتر متقدمة</button><input style="height:34px;border:1px solid var(--line);border-radius:20px;background:var(--card);padding:0 14px;min-width:220px" placeholder="بحث حسب المورد / الحالة / المنطقة"></div>`}
+
+VIEWS.vehicles=()=>{
+ const inside=VEHICLES.filter(v=>v.inside).length, over=VEHICLES.filter(v=>v.over).length;
+ const rows=VEHICLES.map(v=>`<tr><td><b class="mono">${v.plate}</b><div class="t-id">${v.id} · ${v.permit.id}</div></td><td>${v.driver}</td><td>${v.sup.name}</td><td>${v.kind}</td><td>${v.purpose}</td><td>${v.gate}<div class="t-id">${v.zone}</div></td><td class="mono">${v.in} / ${v.out}</td><td>${v.inside?'<span class="chip c-green"><i></i>داخل الموقع</span>':'<span class="chip c-stone"><i></i>خارج الموقع</span>'}</td><td>${v.over?'<span class="chip c-red"><i></i>تجاوز المدة</span>':`<span class="mono">${v.stay}س</span>`}</td></tr>`).join('');
+ return `<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"><div class="kpi" style="--accent:var(--orange)"><div class="lbl">${ic('truck',13)} إجمالي المركبات</div><div class="val">${VEHICLES.length}</div></div><div class="kpi" style="--accent:var(--green)"><div class="lbl">داخل الموقع</div><div class="val">${inside}</div></div><div class="kpi" style="--accent:var(--primary)"><div class="lbl">متجاوزة للمدة</div><div class="val">${over}</div></div><div class="kpi" style="--accent:var(--amber)"><div class="lbl">مرتبطة بتصاريح</div><div class="val">100%</div></div></div>${pageTools('طلب تصريح مركبة')}<div class="card"><div class="card-h">${ic('truck',16)}<h4>تصاريح المركبات وسجل الدخول والخروج</h4><span class="sub">ربط مباشر: مركبة ← مورد ← تصريح</span></div><div style="overflow-x:auto"><table><thead><tr><th>اللوحة</th><th>السائق</th><th>المورد</th><th>نوع المركبة</th><th>الغرض</th><th>البوابة / المنطقة</th><th>الدخول / الخروج</th><th>الحالة</th><th>مدة البقاء</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+};
+
+VIEWS.workers=()=>{
+ const rows=PERMITS.filter(p=>p.type.includes('عمالة')||p.type.includes('مقاول')||p.type.includes('مورد')).map((p,i)=>`<tr><td><b>${['سعود المطيري','ماجد القحطاني','وليد الشمري','نواف العتيبي','عبدالعزيز الزهراني'][i%5]}</b><div class="t-id">هوية: ${ri(1000000000,2999999999)}</div></td><td>${p.sup.name}</td><td>${p.type}</td><td>${ZONES[i%ZONES.length]}</td><td class="mono">${p.issued}</td><td class="mono">${p.expiry}</td><td><span class="chip ${p.st.c}"><i></i>${p.st.t}</span></td><td class="mono">QR-${ri(10000,99999)}</td></tr>`).join('');
+ return `${pageTools('طلب تصريح فرد')}<div class="card"><div class="card-h">${ic('hard',16)}<h4>تصاريح الأفراد والعمالة</h4><span class="sub">هوية / جهة / منطقة / QR</span></div><div style="overflow-x:auto"><table><thead><tr><th>حامل التصريح</th><th>المورد</th><th>نوع التصريح</th><th>المنطقة</th><th>بداية</th><th>نهاية</th><th>الحالة</th><th>رقم التحقق</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+};
+
+VIEWS.incidents=()=>{
+ const open=INCIDENTS.filter(i=>i.status!=='مغلق').length, ded=INCIDENTS.reduce((a,i)=>a+i.deduction,0);
+ const rows=INCIDENTS.map(x=>`<tr><td><span class="t-id">${x.id}</span><div style="font-weight:600">${x.type}</div></td><td>${x.sup.name}</td><td>${x.permit.id}${x.vehicle?`<div class="t-id">${x.vehicle.plate}</div>`:''}</td><td>${x.zone}</td><td><span class="chip ${x.pr.c}"><i></i>${x.pr.t}</span></td><td>${statusChip(x.status)}</td><td class="mono ${x.sla<0?'c-red':''}">${x.sla<0?'متأخر':x.sla+'س'}</td><td>${x.deduction?`<b class="mono" style="color:var(--primary)">${sar(x.deduction)}</b>`:'—'}</td><td>${x.action}</td></tr>`).join('');
+ return `<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"><div class="kpi" style="--accent:var(--primary)"><div class="lbl">بلاغات مفتوحة</div><div class="val">${open}</div></div><div class="kpi" style="--accent:var(--orange)"><div class="lbl">مخالفات معتمدة</div><div class="val">${INCIDENTS.filter(i=>i.status.includes('اعتماد')).length}</div></div><div class="kpi" style="--accent:var(--amber)"><div class="lbl">SLA متأخر</div><div class="val">${INCIDENTS.filter(i=>i.sla<0).length}</div></div><div class="kpi" style="--accent:var(--green)"><div class="lbl">خصومات مقترحة</div><div class="val" style="font-size:20px">${sar(ded)}</div></div></div>${pageTools('رفع بلاغ مخالفة')}<div class="card"><div class="card-h">${ic('alert',16)}<h4>البلاغات والمخالفات</h4><span class="sub">بلاغ ← مورد ← تصريح ← مركبة ← خصم</span></div><div style="overflow-x:auto"><table><thead><tr><th>البلاغ</th><th>المورد</th><th>التصريح / المركبة</th><th>المنطقة</th><th>الخطورة</th><th>الحالة</th><th>SLA</th><th>الخصم</th><th>الإجراء</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+};
+
+VIEWS.deductions=()=>{
+ const list=INCIDENTS.filter(i=>i.deduction>0);
+ return `${pageTools('توصية خصم')}<div class="grid-2">${list.map(i=>`<div class="card hov"><div class="card-h">${ic('coins',16)}<h4>${i.sup.name}</h4><span class="chip ${i.pr.c}"><i></i>${i.pr.t}</span></div><div class="card-b"><div class="kv"><span class="k">المخالفة</span><span class="v">${i.type}</span></div><div class="kv"><span class="k">القيمة المقترحة</span><span class="v mono" style="color:var(--primary)">${sar(i.deduction)}</span></div><div class="kv"><span class="k">حالة الاعتماد</span><span class="v">${statusChip(i.status)}</span></div><div class="kv"><span class="k">الدليل</span><span class="v">صور + ملاحظات ميدانية</span></div></div></div>`).join('')}</div>`;
+};
+
+VIEWS.comms=()=>{
+ const rows=NOTIFS.map(n=>`<tr><td><b>${n.title}</b><div class="t-id">${n.id} · ${n.ref}</div></td><td>${n.target}</td><td><span class="chip ${n.p.c}"><i></i>${n.p.t}</span></td><td>${n.channel}</td><td class="mono">${n.due}</td><td>${n.read?'<span class="chip c-green"><i></i>مقروء</span>':'<span class="chip c-amber"><i></i>غير مقروء</span>'}</td><td><button class="btn btn-o btn-sm">إرسال تنبيه</button></td></tr>`).join('');
+ return `<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"><div class="kpi" style="--accent:var(--primary)"><div class="lbl">إشعارات حرجة</div><div class="val">${NOTIFS.filter(n=>n.p.t==='حرج').length}</div></div><div class="kpi" style="--accent:var(--amber)"><div class="lbl">غير مقروء</div><div class="val">${NOTIFS.filter(n=>!n.read).length}</div></div><div class="kpi" style="--accent:var(--orange)"><div class="lbl">واتساب مستقبلاً</div><div class="val">✓</div></div><div class="kpi" style="--accent:var(--green)"><div class="lbl">سجل الإرسال</div><div class="val">${NOTIFS.length}</div></div></div>${pageTools('إرسال إشعار')}<div class="card"><div class="card-h">${ic('chat',16)}<h4>مركز الإشعارات</h4><span class="sub">داخل المنصة / بريد / واتساب مستقبلاً</span></div><div style="overflow-x:auto"><table><thead><tr><th>الإشعار</th><th>المستلم</th><th>الأولوية</th><th>القناة</th><th>الاستحقاق</th><th>القراءة</th><th>إجراء</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+};
+
+VIEWS.forms=()=>{
+ const rows=FORMS.map(f=>`<tr><td><b>${f.name}</b><div class="t-id">${f.id}</div></td><td>${f.cat}</td><td>${f.supplier}</td><td>${statusChip(f.status)}</td><td>${f.approver}</td><td class="mono">${f.updated}</td><td><button class="btn btn-o btn-sm">فتح السجل</button></td></tr>`).join('');
+ return `${pageTools('إنشاء نموذج')}<div class="card"><div class="card-h">${ic('doc',16)}<h4>النماذج والاعتمادات</h4><span class="sub">مسودة / مراجعة / اعتماد / رفض</span></div><div style="overflow-x:auto"><table><thead><tr><th>النموذج</th><th>التصنيف</th><th>المورد المرتبط</th><th>الحالة</th><th>المعتمد</th><th>آخر تحديث</th><th>السجل</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+};
+
+VIEWS.reports=()=>{
+ const cards=REPORTS.map(r=>`<div class="card hov"><div class="card-h">${ic(r.out.includes('PowerPoint')?'doc':'download',16)}<h4>${r.name}</h4><span class="chip ${r.out.includes('PowerPoint')?'c-orange':'c-green'}">${r.out}</span></div><div class="card-b"><p style="color:var(--ink-2);font-size:12.5px;min-height:38px">${r.desc}</p><div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-p btn-sm" onclick="window.print()">${ic('download',14)} PDF</button><button class="btn btn-o btn-sm" onclick="toast('تم تجهيز مفهوم PowerPoint القابل للتعديل')">PowerPoint</button></div></div></div>`).join('');
+ return `<div class="alert info" style="margin-bottom:16px">${ic('download',18)}<div><b>مخرجات التقارير النهائية</b><p>المخرج الأساسي PDF جاهز للطباعة، وPowerPoint اختياري للملفات القابلة للتعديل. لا يتم اعتماد Excel كمخرج نهائي للمستخدم.</p></div></div><div class="grid-2">${cards}</div>`;
+};
+
+VIEWS.evidence=()=>{
+ const docs=['صورة مخالفة بوابة شمالية.jpg','تقرير تدقيق سلامة.pdf','محضر اجتماع مورد.docx','فيديو دخول مركبة.mp4','إفادة المورد.pdf','اعتماد مدير المشتريات.pdf'];
+ return `${pageTools('رفع دليل')}<div class="grid-3">${docs.map((d,i)=>`<div class="card hov"><div class="card-b"><div class="docline" style="margin:0">${ic('folder',17)}<div class="dn">${d}</div><div class="dm">${['2.4MB','840KB','1.1MB','8.5MB','620KB','950KB'][i]}</div></div><div class="kv"><span class="k">مرتبط بـ</span><span class="v">${INCIDENTS[i%INCIDENTS.length].id}</span></div><div class="kv"><span class="k">المورد</span><span class="v">${SUPPLIERS[i%SUPPLIERS.length].name}</span></div></div></div>`).join('')}</div>`;
+};
+
+VIEWS.portal=()=>`<div class="grid-2"><div class="card"><div class="card-h">${ic('portal',16)}<h4>بوابة الموردين</h4></div><div class="card-b"><p style="color:var(--ink-2);margin-bottom:14px">واجهة مخصصة للمورد لعرض التصاريح، تجديدها، رفع المستندات، الرد على البلاغات، واستلام الإشعارات.</p>${['عرض التصاريح','طلب تجديد','رفع مستندات','الرد على تصعيد','تقييم الأداء'].map(x=>`<div class="kv"><span class="k">${x}</span><span class="v">مفعل</span></div>`).join('')}</div></div><div class="card"><div class="card-h">${ic('shield',16)}<h4>صلاحيات المورد</h4></div><div class="card-b">${radar([80,65,90,55,75,68],['تصاريح','مستندات','بلاغات','تصعيد','أداء','التزام'])}</div></div></div>`;
+
+VIEWS.analytics=()=>`<div class="grid-2"><div class="card"><div class="card-h">${ic('gauge',16)}<h4>المخطط مقابل الفعلي</h4></div><div class="card-b">${areaTrend(SCH.map(x=>x.planned),'var(--green)')}${areaTrend(SCH.map(x=>x.actual),'var(--primary)')}</div></div><div class="card"><div class="card-h">${ic('fire',16)}<h4>أعلى مخاطر تشغيلية</h4></div><div class="card-b">${SCH.filter(x=>x.critical||x.conflict).slice(0,5).map(x=>`<div class="alert ${x.critical?'crit':'warn'}"><div>${ic(x.critical?'fire':'alert',17)}</div><div><b>${x.sup.name}</b><p>${x.task} — المخطط ${x.planned}% / الفعلي ${x.actual}%</p></div></div>`).join('')}</div></div></div>`;
+
+VIEWS.schedule=()=>{
+ const rows=SCH.map((x,i)=>`<div class="gx"><div class="gl ${i?'lvl2':''}">${x.critical?'<span class="chip c-red" style="margin-inline-end:6px">حرج</span>':''}${x.sup.name}<div class="t-id">${x.task} · يعتمد على: ${x.dep}</div></div><div class="gtrack"><div class="gbar" style="inset-inline-start:${x.start}%;width:${x.width}%;background:${x.critical?'var(--primary)':x.conflict?'var(--orange)':'var(--green)'}">${x.actual}%</div></div></div>`).join('');
+ const actions=SCH.filter(x=>x.critical||x.conflict).slice(0,5).map(x=>`<div class="kv"><span class="k">${x.sup.name}</span><span class="v">${x.critical?'إعادة أولوية فورية':'حل تعارض موردين'}</span></div>`).join('');
+ return `<div class="kpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px"><div class="kpi" style="--accent:var(--primary)"><div class="lbl">المسار الحرج</div><div class="val">${SCH.filter(x=>x.critical).length}</div></div><div class="kpi" style="--accent:var(--orange)"><div class="lbl">تعارضات الموردين</div><div class="val">${SCH.filter(x=>x.conflict).length}</div></div><div class="kpi" style="--accent:var(--amber)"><div class="lbl">تأخير مبكر</div><div class="val">${SCH.filter(x=>x.actual<x.planned).length}</div></div><div class="kpi" style="--accent:var(--green)"><div class="lbl">متوسط الفعلي</div><div class="val">${Math.round(SCH.reduce((a,x)=>a+x.actual,0)/SCH.length)}%</div></div></div><div class="g-2-1"><div class="card"><div class="card-h">${ic('calendar',16)}<h4>Gantt تنفيذي للموردين والاعتماديات</h4><span class="sub">مخطط / فعلي / مسار حرج</span></div><div class="card-b"><div class="gantt"><div class="gx"><div class="gl mono" style="color:var(--ink-3)">المورد / المهمة / الاعتمادية</div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3)" class="mono">${['أسبوع ١','٢','٣','٤','٥','٦','٧','٨'].map(w=>`<span>${w}</span>`).join('')}</div></div>${rows}</div></div></div><div class="card"><div class="card-h">${ic('bolt',16)}<h4>توصيات إعادة ترتيب الأولويات</h4></div><div class="card-b">${actions}</div></div></div>`;
+};
+
 /* ---- Settings (with data hub) ---- */
 VIEWS.settings=()=>`
   <div class="grid-2">
